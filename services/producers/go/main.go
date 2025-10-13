@@ -21,7 +21,7 @@ func main() {
 	failOnError(err)
 	defer ch.Close()
 
-	q, _ := ch.QueueDeclare("events", false, false, false, false, nil)
+	q, _ := ch.QueueDeclare("events", true, false, false, false, nil)
 
 	for i := 0; i < 5; i++ {
 		body, _ := json.Marshal(map[string]string{"source": "producer-go", "message": fmt.Sprintf("event %d", i)})

@@ -18,7 +18,23 @@ func main() {
 	}
 	defer ch.Close()
 
-	msgs, _ := ch.Consume("events", "", true, false, false, false, nil)
+	// Asegura que la cola exista con las mismas propiedades
+	_, err = ch.QueueDeclare(
+		"events", // nombre
+		true,     // durable
+		false,    // autoDelete
+		false,    // exclusive
+		false,    // noWait
+		nil,      // args
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	msgs, err := ch.Consume("events", "", true, false, false, false, nil)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println(" [*] Waiting for messages...")
 	for d := range msgs {

@@ -13,7 +13,7 @@ public class Producer {
 
     try (Connection connection = factory.newConnection();
         Channel channel = connection.createChannel()) {
-      channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+      channel.queueDeclare(QUEUE_NAME, true, false, false, null);
       for (int i = 0; i < 5; i++) {
         String message = "event " + i;
         channel.basicPublish("", QUEUE_NAME, null, message.getBytes());

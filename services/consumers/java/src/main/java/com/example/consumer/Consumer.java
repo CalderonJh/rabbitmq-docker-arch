@@ -11,7 +11,7 @@ public class Consumer {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        channel.queueDeclare(QUEUE_NAME, true, false, false, null);
         System.out.println(" [*] Waiting for messages...");
 
         DeliverCallback deliverCallback = (consumerTag, delivery) -> {
