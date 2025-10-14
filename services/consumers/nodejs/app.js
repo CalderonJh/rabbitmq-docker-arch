@@ -1,14 +1,20 @@
-const amqp = require('amqplib');
-const queue = 'events';
+const amqp = require("amqplib");
 
 (async () => {
-  const conn = await amqp.connect('amqp://admin:admin@rabbitmq:5672');
+  const conn = await amqp.connect("amqp://admin:admin@rabbitmq:5672");
   const ch = await conn.createChannel();
-  await ch.assertQueue(queue, {durable: true});
-  console.log(' [*] Waiting for messages...');
-  ch.consume(queue, msg => {
-    const content = msg.content.toString();
-    console.log('Received:', content);
-    ch.ack(msg);
+  await ch.assertExchange("events-exchange", "fanout", { durable: true });
+
+  const q = await ch.assertQueue("events-node", { durable: true });
+  await ch.bindQueue(q.queue, "events-exchange", "");
+
+  console.log(" [*] Waiting for messages...");
+  ch.consume(q.queue, (msg) => {
+    if (msg) {
+      const data = JSON.parse(msg.content.toString());
+      console.log(`Received from ${data.source}: ${data.message}`);
+      ch.ack(msg);
+    }
   });
 })();
+
