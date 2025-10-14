@@ -10,25 +10,17 @@ for _ in range(10):
     except:
         print(f"Waiting for RabbitMQ at {RABBIT_HOST}:5672...")
         time.sleep(3)
-else:
-    print("Could not connect to RabbitMQ.")
-    exit(1)
 
 channel = connection.channel()
-channel.exchange_declare(exchange="events-exchange", exchange_type="fanout", durable=True)
+channel.exchange_declare(exchange="events-topic-exchange", exchange_type="topic", durable=True)
 channel.queue_declare(queue="events-python", durable=True)
-channel.queue_bind(exchange="events-exchange", queue="events-python")
-channel.basic_qos(prefetch_count=1)
+channel.queue_bind(exchange="events-topic-exchange", queue="events-python", routing_key="events.python")
 
 def callback(ch, method, properties, body):
-    print(f"Received raw: {body}")
-    try:
-        data = json.loads(body)
-        print(f"Received from {data['source']}: {data['message']}")
-    except Exception as e:
-        print("Error decoding:", e)
+    data = json.loads(body)
+    print(f"[Python consumer] Received from {data['source']}: {data['message']}")
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 channel.basic_consume(queue="events-python", on_message_callback=callback, auto_ack=False)
-print(" [*] Waiting for messages. To exit press CTRL+C")
+print(" [*] Waiting for Python events...")
 channel.start_consuming()

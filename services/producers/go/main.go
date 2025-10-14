@@ -9,10 +9,12 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type Event struct {
-	Source  string `json:"source"`
-	Message string `json:"message"`
-}
+// Connection parameters
+const (
+	rabbitURL    = "amqp://admin:admin@rabbitmq:5672/"
+	exchangeName = "events-topic-exchange"
+	routingKey   = "events.go"
+)
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -20,30 +22,71 @@ func failOnError(err error, msg string) {
 	}
 }
 
+func connectRabbit() (*amqp.Connection, *amqp.Channel) {
+	var conn *amqp.Connection
+	var ch *amqp.Channel
+	var err error
+
+	// Retry loop until RabbitMQ is available
+	for {
+		conn, err = amqp.Dial(rabbitURL)
+		if err == nil {
+			ch, err = conn.Channel()
+			if err == nil {
+				break
+			}
+		}
+		log.Println("Waiting for RabbitMQ...")
+		time.Sleep(3 * time.Second)
+	}
+	return conn, ch
+}
+
 func main() {
-	conn, err := amqp.Dial("amqp://admin:admin@rabbitmq:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+	for {
+		conn, ch := connectRabbit()
+		defer conn.Close()
+		defer ch.Close()
 
-	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
+		err := ch.ExchangeDeclare(
+			exchangeName, // name
+			"topic",      // type
+			true,         // durable
+			false,        // auto-delete
+			false,        // internal
+			false,        // no-wait
+			nil,          // arguments
+		)
+		failOnError(err, "Failed to declare exchange")
 
-	err = ch.ExchangeDeclare("events-exchange", "fanout", true, false, false, false, nil)
-	failOnError(err, "Failed to declare an exchange")
+		counter := 0
+		for {
+			msg := map[string]string{
+				"source":  "producer-go",
+				"message": fmt.Sprintf("event %d", counter),
+			}
+			body, _ := json.Marshal(msg)
 
-	for i := 0; i < 5; i++ {
-		msg := Event{Source: "producer-go", Message: fmt.Sprintf("event %d", i)}
-		body, _ := json.Marshal(msg)
-		err = ch.Publish(
-			"events-exchange", "", false, false,
-			amqp.Publishing{
-				ContentType: "application/json",
-				Body:        body,
-				DeliveryMode: amqp.Persistent, // mensaje persistente
-			})
-		failOnError(err, "Failed to publish a message")
-		fmt.Println("Sent:", string(body))
-		time.Sleep(1 * time.Second)
+			err = ch.Publish(
+				exchangeName, // exchange
+				routingKey,   // routing key
+				false,        // mandatory
+				false,        // immediate
+				amqp.Publishing{
+					ContentType:  "application/json",
+					Body:         body,
+					DeliveryMode: amqp.Persistent,
+				},
+			)
+			if err != nil {
+				log.Println("Publish failed, reconnecting...")
+				conn.Close()
+				break // Exit inner loop → reconnect
+			}
+
+			log.Printf("Sent: %s\n", string(body))
+			counter++
+			time.Sleep(5 * time.Second)
+		}
 	}
 }
