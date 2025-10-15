@@ -12,16 +12,16 @@ services:
       - appnet
 
   # PRODUCERS
-  producer-python:
-    build: ../../services/producers/python
+  producer-node:
+    build: ../../services/producers/nodejs
     depends_on: [rabbitmq]
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq python producer.py"]
+    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
     volumes:
       - ../../scripts:/scripts:ro
 
-  producer-node:
-    build: ../../services/producers/nodejs
+  producer-node2:
+    build: ../../services/producers/nodejs2
     depends_on: [rabbitmq]
     networks: [appnet]
     command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
@@ -45,16 +45,16 @@ services:
       - ../../scripts:/scripts:ro
 
   # CONSUMERS
-  consumer-python:
-    build: ../../services/consumers/python
-    depends_on: [rabbitmq]
-    networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq python consumer.py"]
-    volumes:
-      - ../../scripts:/scripts:ro
-
   consumer-node:
     build: ../../services/consumers/nodejs
+    depends_on: [rabbitmq]
+    networks: [appnet]
+    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
+    volumes:
+      - ../../scripts:/scripts:ro
+  
+  consumer-node2:
+    build: ../../services/consumers/nodejs2
     depends_on: [rabbitmq]
     networks: [appnet]
     command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
