@@ -10,72 +10,141 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
     networks:
       - appnet
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # PRODUCERS
+  producer-python:
+    build: ../../services/producers/python
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        python producer.py
+      "
+
   producer-node:
     build: ../../services/producers/nodejs
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
-    volumes:
-      - ../../scripts:/scripts:ro
-
-  producer-node2:
-    build: ../../services/producers/nodejs2
-    depends_on: [rabbitmq]
-    networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        node app.js
+      "
 
   producer-java:
     build: ../../services/producers/java
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq java -cp out:lib/* com.example.producer.Producer"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        java -cp out:lib/* com.example.producer.Producer
+      "
 
   producer-go:
     build: ../../services/producers/go
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq ./main"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        ./main
+      "
 
   # CONSUMERS
+  consumer-python:
+    build: ../../services/consumers/python
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        python consumer.py
+      "
+
   consumer-node:
     build: ../../services/consumers/nodejs
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
-    volumes:
-      - ../../scripts:/scripts:ro
-  
-  consumer-node2:
-    build: ../../services/consumers/nodejs2
-    depends_on: [rabbitmq]
-    networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq node app.js"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        node app.js
+      "
 
   consumer-java:
     build: ../../services/consumers/java
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq java -cp out:lib/* com.example.consumer.Consumer"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        java -cp out:lib/* com.example.consumer.Consumer
+      "
 
   consumer-go:
     build: ../../services/consumers/go
-    depends_on: [rabbitmq]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [appnet]
-    command: ["sh", "-c", "/scripts/wait-for-rabbit.sh rabbitmq ./main"]
-    volumes:
-      - ../../scripts:/scripts:ro
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 3;
+        done;
+        echo 'RabbitMQ is ready!';
+        ./main
+      "
 
 networks:
   appnet:
