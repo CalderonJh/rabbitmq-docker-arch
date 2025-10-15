@@ -1,0 +1,42 @@
+services:
+  # PRODUCERS
+  producer-node:
+    build: ../../services/producers/nodejs
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  producer-java:
+    build: ../../services/producers/java
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        java -cp out:lib/* com.example.producer.Producer
+      "
+
+  # CONSUMERS
+  consumer-node:
+    build: ../../services/consumers/nodejs
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  consumer-java:
+    build: ../../services/consumers/java
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        java -cp out:lib/* com.example.consumer.Consumer
+      "
+
+networks:
+  appnet:
+    external: true

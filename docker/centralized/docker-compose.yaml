@@ -76,22 +76,6 @@ services:
     volumes:
       - ../../scripts:/scripts:ro
 
-  producer-python:
-    build: ../../services/producers/python
-    depends_on: [rabbitmq]
-    networks: [appnet]
-    command: >
-      sh -c "
-        until nc -z rabbitmq 5672; do
-          echo 'Waiting for RabbitMQ...';
-          sleep 3;
-        done;
-        echo 'RabbitMQ is ready!';
-        python producer.py
-      "
-    volumes:
-      - ../../scripts:/scripts:ro
-
   # CONSUMERS
   consumer-node:
     build: ../../services/consumers/nodejs
@@ -153,22 +137,6 @@ services:
         done;
         echo 'RabbitMQ is ready!';
         ./main
-      "
-    volumes:
-      - ../../scripts:/scripts:ro
-
-  consumer-python:
-    build: ../../services/consumers/python
-    depends_on: [rabbitmq]
-    networks: [appnet]
-    command: >
-      sh -c "
-        until nc -z rabbitmq 5672; do
-          echo 'Waiting for RabbitMQ...';
-          sleep 3;
-        done;
-        echo 'RabbitMQ is ready!';
-        python consumer.py
       "
     volumes:
       - ../../scripts:/scripts:ro

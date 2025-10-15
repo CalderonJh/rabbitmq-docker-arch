@@ -1,0 +1,76 @@
+services:
+  producer-node:
+    build: ../../services/producers/nodejs
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  producer-node2:
+    build: ../../services/producers/nodejs2
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  producer-java:
+    build: ../../services/producers/java
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        java -cp out:lib/* com.example.producer.Producer
+      "
+
+  producer-go:
+    build: ../../services/producers/go
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        ./main
+      "
+
+  consumer-node:
+    build: ../../services/consumers/nodejs
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  consumer-node2:
+    build: ../../services/consumers/nodejs2
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  consumer-java:
+    build: ../../services/consumers/java
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        java -cp out:lib/* com.example.consumer.Consumer
+      "
+
+  consumer-go:
+    build: ../../services/consumers/go
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        ./main
+      "
+
+networks:
+  appnet:
+    external: true

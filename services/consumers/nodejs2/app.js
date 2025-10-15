@@ -13,7 +13,7 @@ const amqp = require("amqplib");
   channel.consume("events-node-2", (msg) => {
     if (msg) {
       const data = JSON.parse(msg.content.toString());
-      console.log(`[Node consumer] Received from ${data.source}: ${data.message}`);
+      console.log(`[Node consumer 2] Received from ${data.source}: ${data.message}`);
       channel.ack(msg);
     }
   });

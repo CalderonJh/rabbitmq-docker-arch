@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  # PRODUCERS
+  producer-node2:
+    build: ../../services/producers/nodejs2
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  producer-go:
+    build: ../../services/producers/go
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        ./main
+      "
+
+  # CONSUMERS
+  consumer-node2:
+    build: ../../services/consumers/nodejs2
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        node app.js
+      "
+
+  consumer-go:
+    build: ../../services/consumers/go
+    networks: [appnet]
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do echo 'Waiting for RabbitMQ...'; sleep 3; done;
+        ./main
+      "
+
+networks:
+  appnet:
+    external: true
